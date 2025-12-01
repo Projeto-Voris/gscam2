@@ -4,46 +4,55 @@ import os
 
 from ament_index_python.packages import get_package_share_directory
 from launch import LaunchDescription
+from launch.actions import DeclareLaunchArgument
+from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
-
+from launch_ros.substitutions import FindPackageShare
 # Your camera namespace
-camera_name = 'my_camera'
+# camera_name = 'bluerov2'
 
-# Location of configuration directory
-config_dir = os.path.join(get_package_share_directory('gscam2'), 'cfg')
-print(config_dir)
+# # Location of configuration directory
+# config_dir = os.path.join(get_package_share_directory('gscam2'), 'cfg')
+# print(config_dir)
 
-# Parameters file
-params_file = os.path.join(config_dir, 'params.yaml')
-print(params_file)
+# # Parameters file
+# params_file = os.path.join(config_dir, 'params.yaml')
+# print(params_file)
 
-# Camera calibration file
-camera_config = 'file://' + os.path.join(config_dir, 'my_camera.ini')
-print(camera_config)
+# # Camera calibration file
+# camera_config = 'file://' + os.path.join(config_dir, camera_name+'.ini')
+# print(camera_config)
 
 
 def generate_launch_description():
 
-    node = Node(
-        package='gscam2',
-        executable='gscam_main',
-        output='screen',
-        name='gscam_publisher',
-        namespace=camera_name,
-        parameters=[
-            # Some parameters from a yaml file
-            params_file,
-            # A few more parameters
-            {
-                'camera_name': camera_name,  # Camera Name
-                'camera_info_url': camera_config,  # Camera calibration information
-            },
-        ],
-        # Remap outputs to the correct namespace
-        remappings=[
-            ('/image_raw', '/' + camera_name + '/image_raw'),
-            ('/camera_info', '/' + camera_name + '/camera_info'),
-        ],
-    )
+    return LaunchDescription([
 
-    return LaunchDescription([node])
+        DeclareLaunchArgument('namespace', default_value='bluerov2', description='namespace'),
+        DeclareLaunchArgument('image_topic', default_value='image_raw', description='image topic'),
+        DeclareLaunchArgument('camera_info', default_value='camera_info', description='camera info topic'),
+        DeclareLaunchArgument('camera_config', default_value=PathJoinSubstitution([FindPackageShare('gscam2'), 'cfg','bluerov2.ini']), description='Number of images to acquire'),
+        DeclareLaunchArgument('param_file', default_value=PathJoinSubstitution([FindPackageShare('gscam2'), 'cfg', 'params.yaml'])),
+        
+        Node(
+            package='gscam2',
+            executable='gscam_main',
+            output='screen',
+            name='gscam_publisher',
+            namespace=LaunchConfiguration('namespace'),
+            parameters=[
+                # Some parameters from a yaml file
+                LaunchConfiguration('param_file'),
+                # A few more parameters
+                {
+                    'camera_name': LaunchConfiguration('namespace'),  # Camera Name
+                    'camera_info_url': LaunchConfiguration('camera_config'),  # Camera calibration information
+                },
+            ],
+            # Remap outputs to the correct namespace
+            remappings=[
+                ('/image_raw', LaunchConfiguration('image_topic')),
+                ('/camera_info', LaunchConfiguration('camera_info')),
+            ],
+        )
+    ])
