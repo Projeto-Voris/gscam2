@@ -8,30 +8,17 @@ from launch.actions import DeclareLaunchArgument
 from launch.substitutions import PathJoinSubstitution, LaunchConfiguration
 from launch_ros.actions import Node
 from launch_ros.substitutions import FindPackageShare
-# Your camera namespace
-# camera_name = 'bluerov2'
-
-# # Location of configuration directory
-# config_dir = os.path.join(get_package_share_directory('gscam2'), 'cfg')
-# print(config_dir)
-
-# # Parameters file
-# params_file = os.path.join(config_dir, 'params.yaml')
-# print(params_file)
-
-# # Camera calibration file
-# camera_config = 'file://' + os.path.join(config_dir, camera_name+'.ini')
-# print(camera_config)
-
 
 def generate_launch_description():
+
+    camera_param = PathJoinSubstitution([FindPackageShare('gscam2'), 'cfg','bluerov2.ini'])
 
     return LaunchDescription([
 
         DeclareLaunchArgument('namespace', default_value='bluerov2', description='namespace'),
         DeclareLaunchArgument('image_topic', default_value='image_raw', description='image topic'),
         DeclareLaunchArgument('camera_info', default_value='camera_info', description='camera info topic'),
-        DeclareLaunchArgument('camera_config', default_value=PathJoinSubstitution([FindPackageShare('gscam2'), 'cfg','bluerov2.ini']), description='Number of images to acquire'),
+        DeclareLaunchArgument('camera_config', default_value=['file://', camera_param], description='Number of images to acquire'),
         DeclareLaunchArgument('param_file', default_value=PathJoinSubstitution([FindPackageShare('gscam2'), 'cfg', 'params.yaml'])),
         
         Node(
